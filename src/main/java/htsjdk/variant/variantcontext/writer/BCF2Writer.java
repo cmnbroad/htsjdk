@@ -29,6 +29,7 @@ import htsjdk.samtools.SAMSequenceDictionary;
 import htsjdk.samtools.util.RuntimeIOException;
 import htsjdk.tribble.index.IndexCreator;
 import htsjdk.variant.bcf2.BCF2Codec;
+import htsjdk.variant.bcf2.BCF2Dictionary;
 import htsjdk.variant.bcf2.BCF2Type;
 import htsjdk.variant.bcf2.BCF2Utils;
 import htsjdk.variant.bcf2.BCFVersion;
@@ -101,8 +102,6 @@ import java.util.Map;
  * @since 06/12
  */
 class BCF2Writer extends IndexingVariantContextWriter {
-    public static final int MAJOR_VERSION = 2;
-    public static final int MINOR_VERSION = 1;
 
     final private static boolean ALLOW_MISSING_CONTIG_LINES = false;
 
@@ -163,7 +162,8 @@ class BCF2Writer extends IndexingVariantContextWriter {
         }
 
         // set up the map from dictionary string values -> offset
-        final ArrayList<String> dict = BCF2Utils.makeDictionary(header);
+        BCFVersion targetBCFVersion = new BCFVersion(BCFVersion.BCF_CURRENT_MAJOR_VERSION, BCFVersion.BCF_CURRENT_MINOR_VERSION);
+        BCF2Dictionary dict = BCF2Dictionary.makeBCF2StringDictionary(header, targetBCFVersion);
         for ( int i = 0; i < dict.size(); i++ ) {
             stringDictionaryMap.put(dict.get(i), i);
         }
@@ -182,7 +182,7 @@ class BCF2Writer extends IndexingVariantContextWriter {
             writer.close();
 
             final byte[] headerBytes = capture.toByteArray();
-            new BCFVersion(MAJOR_VERSION, MINOR_VERSION).write(outputStream);
+            targetBCFVersion.write(outputStream);
             BCF2Type.INT32.write(headerBytes.length, outputStream);
             outputStream.write(headerBytes);
         } catch (IOException e) {

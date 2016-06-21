@@ -26,6 +26,7 @@
 package htsjdk.variant.vcf;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author ebanks
@@ -62,6 +63,18 @@ public class VCFFilterHeaderLine extends VCFSimpleHeaderLine  {
      */
     public VCFFilterHeaderLine(final String line, final VCFHeaderVersion version) {
         super(line, version, "FILTER", Arrays.asList("ID", "Description"));
+    }
+
+    /**
+     * Create a default VCF info header line handler. Canbe overriden by
+     * subclasses to provide alternate handlers.
+     *
+     * @param filterLine the FILTER header line
+     * @param version the vcf header version
+     * @param filterFields list of allowed fields for the filter line
+     */
+    public VCFFilterHeaderLine(String filterLine, VCFHeaderVersion version, List<String> filterFields) {
+        super(filterLine, version, "FILTER", filterFields);
     }
 
     @Override

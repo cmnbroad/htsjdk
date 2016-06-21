@@ -86,9 +86,11 @@ public final class BCF2UtilsUnitTest extends VariantBaseTest {
         inputLines.add(new VCFSimpleHeaderLine("GATKCommandLine","z","misc"));
         inputLines.add(new VCFFormatHeaderLine(String.valueOf(counter++), VCFHeaderLineCount.UNBOUNDED, VCFHeaderLineType.Integer, "x"));
         inputLines.add(new VCFFormatHeaderLine(String.valueOf(counter++), VCFHeaderLineCount.UNBOUNDED, VCFHeaderLineType.Integer, "x"));
-        final int inputLineCounter = counter;
-        final VCFHeader inputHeader = new VCFHeader(new LinkedHashSet<VCFHeaderLine>(inputLines));
-        final ArrayList<String> dict = BCF2Utils.makeDictionary(inputHeader);
+        final VCFHeader inputHeader = new VCFHeader(new LinkedHashSet<>(inputLines));
+        final BCF2Dictionary dict = BCF2Dictionary.makeBCF2StringDictionary(
+                inputHeader,
+                new BCFVersion(BCFVersion.BCF_CURRENT_MAJOR_VERSION, BCFVersion.BCF_CURRENT_MINOR_VERSION)
+        );
         final int dict_size = dict.size();
         Assert.assertEquals(7,dict_size);
     }

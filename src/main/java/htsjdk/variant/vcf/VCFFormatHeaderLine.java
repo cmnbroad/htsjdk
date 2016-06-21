@@ -60,4 +60,10 @@ public class VCFFormatHeaderLine extends VCFCompoundHeaderLine {
     public boolean shouldBeAddedToDictionary() {
         return true;
     }
+
+    @Override
+    protected boolean getIDXFieldAllowed() {
+        return false;
+    }
+
 }

@@ -200,13 +200,13 @@ public abstract class AbstractVCFCodec extends AsciiFeatureCodec<VariantContext>
 
             } else {
                 if ( str.startsWith(VCFConstants.INFO_HEADER_START) ) {
-                    final VCFInfoHeaderLine info = new VCFInfoHeaderLine(str.substring(7), version);
+                    final VCFInfoHeaderLine info = getInfoHeaderLineHandler(str.substring(7), version);
                     metaData.add(info);
                 } else if ( str.startsWith(VCFConstants.FILTER_HEADER_START) ) {
-                    final VCFFilterHeaderLine filter = new VCFFilterHeaderLine(str.substring(9), version);
+                    final VCFFilterHeaderLine filter = getFilterHeaderLineHandler(str.substring(9), version);
                     metaData.add(filter);
                 } else if ( str.startsWith(VCFConstants.FORMAT_HEADER_START) ) {
-                    final VCFFormatHeaderLine format = new VCFFormatHeaderLine(str.substring(9), version);
+                    final VCFFormatHeaderLine format = getFormatHeaderLineHandler(str.substring(9), version);
                     metaData.add(format);
                 } else if ( str.startsWith(VCFConstants.CONTIG_HEADER_START) ) {
                     final VCFContigHeaderLine contig = new VCFContigHeaderLine(str.substring(9), version, VCFConstants.CONTIG_HEADER_START.substring(2), contigCounter++);
@@ -228,7 +228,40 @@ public abstract class AbstractVCFCodec extends AsciiFeatureCodec<VariantContext>
         return this.header;
     }
 
-	/**
+    /**
+     * Subclasses can override this in order to provide custom FILTER line handling.
+     *
+     * @param filterLine VCF FILTER header line being parsed
+     * @param version VCFVersion for being parsed
+     * @return a VCFFilterHeaderLine handler
+     */
+    public VCFFilterHeaderLine getFilterHeaderLineHandler(String filterLine, VCFHeaderVersion version) {
+        return new VCFFilterHeaderLine(filterLine, version);
+    }
+
+    /**
+     * Subclasses can override this in order to provide custom INFO line handling.
+     *
+     * @param infoLine VCF INFO header line being parsed
+     * @param version VCFVersion for being parsed
+     * @return a VCFInfoHeaderLine handler
+     */
+    public VCFInfoHeaderLine getInfoHeaderLineHandler(String infoLine, VCFHeaderVersion version) {
+        return new VCFInfoHeaderLine(infoLine, version);
+    }
+
+    /**
+     * Allow subclasses to override this in order to provide custom FORMAT line handling.
+     *
+     * @param formatLine VCF header line being parsed
+     * @param version VCFVersion for being parsed
+     * @return a VCFFormatHeaderLine handler
+     */
+    public VCFFormatHeaderLine getFormatHeaderLineHandler(String formatLine, VCFHeaderVersion version) {
+        return new VCFFormatHeaderLine(formatLine, version);
+    }
+
+    /**
 	 * Explicitly set the VCFHeader on this codec. This will overwrite the header read from the file
 	 * and the version state stored in this instance; conversely, reading the header from a file will
 	 * overwrite whatever is set here. The returned header may not be identical to the header argument

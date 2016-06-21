@@ -25,6 +25,8 @@
 
 package htsjdk.variant.vcf;
 
+import htsjdk.tribble.TribbleException;
+
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +78,11 @@ public class VCFSimpleHeaderLine extends VCFHeaderLine implements VCFIDHeaderLin
 	 * Returns the String value associated with the given key. Returns null if there is no value. Key
 	 * must not be null.
 	 */
-	String getGenericFieldValue(final String key) {
+    @Override
+	public String getGenericFieldValue(final String key) {
+        if (null == key) {
+            throw new TribbleException("VCFHeaderLine field value query must not be null");
+        }
 		return this.genericFields.get(key);
 	}
 

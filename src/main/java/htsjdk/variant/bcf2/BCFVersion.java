@@ -38,6 +38,12 @@ import java.util.Arrays;
  * Time: 2:16 PM
  */
 public class BCFVersion {
+
+    // Currently supported version for reading and writing
+    public static final int BCF_CURRENT_MAJOR_VERSION = 2;
+    public static final int BCF_CURRENT_MINOR_VERSION = 1;
+    public static final int BCF_MINOR_VERSION_2 = 2;
+
     /**
      * BCF2 begins with the MAGIC info BCF_M_m where M is the major version (currently 2)
      * and m is the minor version, currently 1

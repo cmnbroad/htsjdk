@@ -38,12 +38,7 @@ import htsjdk.variant.variantcontext.LazyGenotypesContext;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.variantcontext.VariantContextBuilder;
 import htsjdk.variant.variantcontext.VariantContextUtils;
-import htsjdk.variant.vcf.VCFCodec;
-import htsjdk.variant.vcf.VCFCompoundHeaderLine;
-import htsjdk.variant.vcf.VCFConstants;
-import htsjdk.variant.vcf.VCFContigHeaderLine;
-import htsjdk.variant.vcf.VCFHeader;
-import htsjdk.variant.vcf.VCFHeaderLineType;
+import htsjdk.variant.vcf.*;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -59,21 +54,22 @@ public final class BCF2Codec extends BinaryFeatureCodec<VariantContext> {
     private final static int ALLOWED_MAJOR_VERSION = 2;
     private final static int MIN_MINOR_VERSION = 1;
 
-    private BCFVersion bcfVersion = null;
+    public static String IDXField = "IDX"; // BCF2.2 IDX field name
 
-    private VCFHeader header = null;
+    private BCFVersion bcfVersion;
+    private VCFHeader header;
 
     /**
      * Maps offsets (encoded in BCF) into contig names (from header) for the CHROM field
      */
-    private final ArrayList<String> contigNames = new ArrayList<String>();
+    private BCF2Dictionary contigDictionary;
 
     /**
      * Maps header string names (encoded in VCF) into strings found in the BCF header
      *
      * Initialized when processing the header
      */
-    private ArrayList<String> dictionary;
+    private BCF2Dictionary stringDictionary;
 
     /**
      * Our decoder that reads low-level objects from the BCF2 records
@@ -168,27 +164,19 @@ public final class BCF2Codec extends BinaryFeatureCodec<VariantContext> {
 
             final PositionalBufferedStream bps = new PositionalBufferedStream(new ByteArrayInputStream(headerBytes));
             final LineIterator lineIterator = new LineIteratorImpl(new SynchronousLineReader(bps));
-            final VCFCodec headerParser = new VCFCodec();
+            // create a VCF Codec for handling VCFs embedded in BCFs
+            final BCFVCFCodec headerParser = new BCFVCFCodec(bcfVersion);
             this.header = (VCFHeader) headerParser.readActualHeader(lineIterator);
             bps.close();
         } catch ( IOException e ) {
             throw new TribbleException("I/O error while reading BCF2 header");
         }
 
-        // create the config offsets
-        if ( ! header.getContigLines().isEmpty() ) {
-            contigNames.clear();
-            for ( final VCFContigHeaderLine contig : header.getContigLines()) {
-                if ( contig.getID() == null || contig.getID().equals("") )
-                    error("found a contig with an invalid ID " + contig);
-                contigNames.add(contig.getID());
-            }
-        } else {
-            error("Didn't find any contig lines in BCF2 file header");
-        }
+        // create the contig dictionary
+        contigDictionary = makeContigDictionary(bcfVersion);
 
         // create the string dictionary
-        dictionary = parseDictionary(header);
+        stringDictionary = makeStringDictionary(bcfVersion);
 
         // prepare the genotype field decoders
         gtFieldDecoders = new BCF2GenotypeFieldDecoders(header);
@@ -438,8 +426,8 @@ public final class BCF2Codec extends BinaryFeatureCodec<VariantContext> {
         return getDictionaryString((Integer) decoder.decodeTypedValue());
     }
 
-    protected final String getDictionaryString(final int offset) {
-        return dictionary.get(offset);
+    protected final String getDictionaryString(final int index) {
+        return stringDictionary.get(index);
     }
 
     /**
@@ -450,11 +438,20 @@ public final class BCF2Codec extends BinaryFeatureCodec<VariantContext> {
      * @return
      */
     private final String lookupContigName( final int contigOffset ) {
-        return contigNames.get(contigOffset);
+        return contigDictionary.get(contigOffset);
     }
 
-    private final ArrayList<String> parseDictionary(final VCFHeader header) {
-        final ArrayList<String> dict = BCF2Utils.makeDictionary(header);
+    private final BCF2Dictionary makeContigDictionary(final BCFVersion bcfVersion) {
+        // create the config offsets
+        if (header.getContigLines().isEmpty()) {
+            error("Didn't find any contig lines in BCF2 file header");
+        }
+        return BCF2Dictionary.makeBCF2ContigDictionary(header, bcfVersion);
+    }
+
+    private final BCF2Dictionary makeStringDictionary(final BCFVersion bcfVersion) {
+
+        BCF2Dictionary dict = BCF2Dictionary.makeBCF2StringDictionary(header, bcfVersion);
 
         // if we got here we never found a dictionary, or there are no elements in the dictionary
         if ( dict.isEmpty() )

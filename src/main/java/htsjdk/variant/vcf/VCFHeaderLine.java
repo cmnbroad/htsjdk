@@ -85,6 +85,14 @@ public class VCFHeaderLine implements Comparable, Serializable {
     }
 
     /**
+     * Returns the String value associated with the given key. Returns null if there is no value. Key
+     * must not be null.
+     */
+    public String getGenericFieldValue(final String key) {
+        return null;
+    }
+
+    /**
      * By default the header lines won't be added to the dictionary, unless this method will be override (for example in FORMAT, INFO or FILTER header lines)
      *
      * @return false

@@ -26,14 +26,12 @@
 package htsjdk.variant.vcf;
 
 import htsjdk.tribble.TribbleException;
+import htsjdk.variant.bcf2.BCF2Codec;
 import htsjdk.variant.utils.GeneralUtils;
 import htsjdk.variant.variantcontext.GenotypeLikelihoods;
 import htsjdk.variant.variantcontext.VariantContext;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * a base class for compound header lines, which include info lines and format lines (so far)
@@ -55,6 +53,9 @@ public abstract class VCFCompoundHeaderLine extends VCFHeaderLine implements VCF
     private VCFHeaderLineCount countType;
     private String description;
     private VCFHeaderLineType type;
+
+    // retain the field values
+    private Map<String, String> mapping = new HashMap<>();
 
     // access methods
     public String getID() { return name; }
@@ -161,7 +162,10 @@ public abstract class VCFCompoundHeaderLine extends VCFHeaderLine implements VCF
         final ArrayList<String> expectedTags = new ArrayList(Arrays.asList("ID", "Number", "Type", "Description"));
         if (version.isAtLeastAsRecentAs(VCFHeaderVersion.VCF4_2))
             expectedTags.add("Version");
-        final Map<String, String> mapping = VCFHeaderLineTranslator.parseLine(version, line, expectedTags);
+        if (getIDXFieldAllowed()) {  // true for BCF 2.2+
+            expectedTags.add(BCF2Codec.IDXField);
+        }
+        mapping = VCFHeaderLineTranslator.parseLine(version, line, expectedTags);
         name = mapping.get("ID");
         count = -1;
         final String numberStr = mapping.get("Number");
@@ -198,6 +202,19 @@ public abstract class VCFCompoundHeaderLine extends VCFHeaderLine implements VCF
         this.lineType = lineType;
 
         validate();
+    }
+
+    // Determine if optional IDX fields  are allowed (i.e., for BCF 2.2)
+    protected boolean getIDXFieldAllowed() {
+        return false;
+    }
+
+    @Override
+    public String getGenericFieldValue(final String key) {
+        if (null == key) {
+            throw new TribbleException("VCFHeaderLine field value query must not be null");
+        }
+        return mapping.get(key);
     }
 
     private void validate() {

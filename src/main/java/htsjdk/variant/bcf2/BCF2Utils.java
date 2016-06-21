@@ -71,41 +71,6 @@ public final class BCF2Utils {
 
     private BCF2Utils() {}
 
-    /**
-     * Create a strings dictionary from the VCF header
-     *
-     * The dictionary is an ordered list of common VCF identifers (FILTER, INFO, and FORMAT)
-     * fields.
-     *
-     * Note that its critical that the list be dedupped and sorted in a consistent manner each time,
-     * as the BCF2 offsets are encoded relative to this dictionary, and if it isn't determined exactly
-     * the same way as in the header each time it's very bad
-     *
-     * @param header the VCFHeader from which to build the dictionary
-     * @return a non-null dictionary of elements, may be empty
-     */
-    public static ArrayList<String> makeDictionary(final VCFHeader header) {
-        final Set<String> seen = new HashSet<String>();
-        final ArrayList<String> dict = new ArrayList<String>();
-
-        // special case the special PASS field which doesn't show up in the FILTER field definitions
-        seen.add(VCFConstants.PASSES_FILTERS_v4);
-        dict.add(VCFConstants.PASSES_FILTERS_v4);
-
-        // set up the strings dictionary
-        for ( VCFHeaderLine line : header.getMetaDataInInputOrder() ) {
-            if ( line.shouldBeAddedToDictionary() ) {
-                final VCFIDHeaderLine idLine = (VCFIDHeaderLine)line;
-                if ( ! seen.contains(idLine.getID())) {
-                    dict.add(idLine.getID());
-                    seen.add(idLine.getID());
-                }
-            }
-        }
-
-        return dict;
-    }
-
     public static byte encodeTypeDescriptor(final int nElements, final BCF2Type type ) {
         return (byte)((0x0F & nElements) << 4 | (type.getID() & 0x0F));
     }

@@ -29,11 +29,7 @@ import htsjdk.tribble.Feature;
 import htsjdk.tribble.TribbleException;
 import htsjdk.tribble.util.ParsingUtils;
 import htsjdk.variant.utils.GeneralUtils;
-import htsjdk.variant.vcf.VCFCompoundHeaderLine;
-import htsjdk.variant.vcf.VCFConstants;
-import htsjdk.variant.vcf.VCFHeader;
-import htsjdk.variant.vcf.VCFHeaderLineCount;
-import htsjdk.variant.vcf.VCFHeaderLineType;
+import htsjdk.variant.vcf.*;
 
 import java.io.Serializable;
 import java.util.*;
@@ -257,6 +253,9 @@ public class VariantContext implements Feature, Serializable {
     /* cached monomorphic value: null -> not yet computed, False, True */
     private Boolean monomorphic = null;
 
+    // The VCF fileformat version the read originated from: null -> artificial
+    private VCFHeaderVersion oldVersion;
+
     /*
 * Determine which genotype fields are in use in the genotypes in VC
 * @return an ordered list of genotype fields in use in VC.  If vc has genotypes this will always include GT first
@@ -334,7 +333,7 @@ public class VariantContext implements Feature, Serializable {
                 other.getAlleles(), other.getGenotypes(), other.getLog10PError(),
                 other.getFiltersMaybeNull(),
                 other.getAttributes(),
-                other.fullyDecoded, NO_VALIDATION);
+                other.fullyDecoded, NO_VALIDATION, other.oldVersion);
     }
 
     /**
@@ -363,10 +362,28 @@ public class VariantContext implements Feature, Serializable {
                              final Map<String, Object> attributes,
                              final boolean fullyDecoded,
                              final EnumSet<Validation> validationToPerform ) {
+        this(source, ID, contig, start, stop, alleles, genotypes, log10PError, filters, attributes, fullyDecoded, validationToPerform, VCFHeaderVersion.mostRecentHeaderVersion());
+    }
+
+    protected VariantContext(final String source,
+                             final String ID,
+                             final String contig,
+                             final long start,
+                             final long stop,
+                             final Collection<Allele> alleles,
+                             final GenotypesContext genotypes,
+                             final double log10PError,
+                             final Set<String> filters,
+                             final Map<String, Object> attributes,
+                             final boolean fullyDecoded,
+                             final EnumSet<Validation> validationToPerform,
+                             final VCFHeaderVersion oldVersion
+    ){
         if ( contig == null ) { throw new IllegalArgumentException("Contig cannot be null"); }
         this.contig = contig;
         this.start = start;
         this.stop = stop;
+        this.oldVersion = oldVersion;
 
         // intern for efficiency.  equals calls will generate NPE if ID is inappropriately passed in as null
         if ( ID == null || ID.equals("") ) throw new IllegalArgumentException("ID field cannot be the null or the empty string");
@@ -1722,10 +1739,15 @@ public class VariantContext implements Feature, Serializable {
         if ( index == -1 ) throw new IllegalArgumentException("Allele " + targetAllele + " not in this VariantContex " + this);
         return GenotypeLikelihoods.getPLIndecesOfAlleles(0, index);
     }
-    
-    /** 
-     * Search for the INFO=SVTYPE and return the type of Structural Variant 
-     * @return the StructuralVariantType of null if there is no property SVTYPE 
+
+    public VCFHeaderVersion getOldVersion() {
+        if (this.oldVersion != null) return this.oldVersion;
+        return VCFHeaderVersion.mostRecentHeaderVersion();
+    }
+
+    /**
+     * Search for the INFO=SVTYPE and return the type of Structural Variant
+     * @return the StructuralVariantType of null if there is no property SVTYPE
      * */
     public StructuralVariantType getStructuralVariantType() {
         final String svType = this.getAttributeAsString(VCFConstants.SVTYPE, null);

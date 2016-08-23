@@ -23,9 +23,9 @@ import java.util.TreeMap;
 public class VCFEncoder {
 
 	/**
-	 * The encoding used for VCF files: ISO-8859-1
+	 * The encoding used for VCF files: UTF-8
 	 */
-	public static final Charset VCF_CHARSET = Charset.forName("ISO-8859-1");
+	public static final Charset VCF_CHARSET = Charset.forName("UTF-8"); //TODO make sure this doesnt explode
 	private static final String QUAL_FORMAT_STRING = "%.2f";
 	private static final String QUAL_FORMAT_EXTENSION_TO_TRIM = ".00";
 
@@ -68,6 +68,8 @@ public class VCFEncoder {
 		if (this.header == null) {
 			throw new NullPointerException("The header field must be set on the VCFEncoder before encoding records.");
 		}
+		// if the context comes from a version older than VCF4.3 automatically convert any percent character to its encoded form
+		boolean encodePercents = !context.getOldVersion().isAtLeastAsRecentAs(VCFHeaderVersion.VCF4_3);
 
 		final StringBuilder stringBuilder = new StringBuilder();
 
@@ -104,13 +106,12 @@ public class VCFEncoder {
 		stringBuilder.append(VCFConstants.FIELD_SEPARATOR)
 				// FILTER
 				.append(getFilterString(context)).append(VCFConstants.FIELD_SEPARATOR);
-
 		// INFO
 		final Map<String, String> infoFields = new TreeMap<String, String>();
 		for (final Map.Entry<String, Object> field : context.getAttributes().entrySet() ) {
 			if ( ! this.header.hasInfoLine(field.getKey())) fieldIsMissingFromHeaderError(context, field.getKey(), "INFO");
 
-			final String outputValue = formatVCFField(field.getValue());
+			final String outputValue = formatVCFField(field.getValue(), encodePercents);
 			if (outputValue != null) infoFields.put(field.getKey(), outputValue);
 		}
 		writeInfoString(infoFields, stringBuilder);
@@ -175,7 +176,7 @@ public class VCFEncoder {
 					+ " complete VCF headers by default.");
 	}
 
-	String formatVCFField(final Object val) {
+	String formatVCFField(final Object val, boolean encodePercents) {
 		final String result;
 		if ( val == null )
 			result = VCFConstants.MISSING_VALUE_v4;
@@ -184,19 +185,20 @@ public class VCFEncoder {
 		else if ( val instanceof Boolean )
 			result = (Boolean)val ? "" : null; // empty string for true, null for false
 		else if ( val instanceof List ) {
-			result = formatVCFField(((List)val).toArray());
+			result = formatVCFField(((List)val).toArray(), encodePercents);
 		} else if ( val.getClass().isArray() ) {
 			final int length = Array.getLength(val);
 			if ( length == 0 )
-				return formatVCFField(null);
-			final StringBuilder sb = new StringBuilder(formatVCFField(Array.get(val, 0)));
+				return formatVCFField(null, encodePercents);
+			final StringBuilder sb = new StringBuilder(formatVCFField(Array.get(val, 0), encodePercents));
 			for ( int i = 1; i < length; i++) {
 				sb.append(',');
-				sb.append(formatVCFField(Array.get(val, i)));
+				sb.append(formatVCFField(Array.get(val, i), encodePercents));
 			}
 			result = sb.toString();
 		} else
-			result = val.toString();
+			if (encodePercents) {result = VCFUtils.toPercentEncodingFast(val.toString());}
+			else {result = val.toString();}
 
 		return result;
 	}
@@ -309,7 +311,7 @@ public class VCFEncoder {
 							}
 
 							// assume that if key is absent, then the given string encoding suffices
-							outputValue = formatVCFField(val);
+							outputValue = formatVCFField(val, false);
 						}
 					}
 

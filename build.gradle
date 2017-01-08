@@ -6,6 +6,7 @@ buildscript {
 
 plugins {
     id "java"
+    id "scala"
     id 'maven'
     id 'signing'
     id 'jacoco'
@@ -42,6 +43,10 @@ dependencies {
     compile "gov.nih.nlm.ncbi:ngs-java:1.2.4"
 
     testCompile "org.testng:testng:6.9.9"
+    // Scala and ScalaTest dependencies: testCompile only
+    testCompile 'org.scala-lang:scala-library:2.12.1'
+    testCompile 'org.scalatest:scalatest_2.12:3.0.0'
+    testCompile 'org.scalacheck:scalacheck_2.12:1.13.4'
 }
 
 sourceCompatibility = 1.8

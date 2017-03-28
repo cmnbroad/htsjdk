@@ -52,26 +52,30 @@ public class VCFStandardHeaderLines {
      * Enabling this causes us to repair header lines even if only their descriptions differ.
      */
     private final static boolean REPAIR_BAD_DESCRIPTIONS = false;
-    private static Standards<VCFFormatHeaderLine> formatStandards = new Standards<VCFFormatHeaderLine>();
-    private static Standards<VCFInfoHeaderLine> infoStandards = new Standards<VCFInfoHeaderLine>();
+    private static Standards<VCFFormatHeaderLine> formatStandards = new Standards<>();
+    private static Standards<VCFInfoHeaderLine> infoStandards = new Standards<>();
 
     /**
      * Walks over the VCF header and repairs the standard VCF header lines in it, returning a freshly
      * allocated {@link VCFHeader} with standard VCF header lines repaired as necessary.
      */
     public static VCFHeader repairStandardHeaderLines(final VCFHeader header) {
-        final Set<VCFHeaderLine> newLines = new LinkedHashSet<VCFHeaderLine>(header.getMetaDataInInputOrder().size());
+        final Set<VCFHeaderLine> newLines = new LinkedHashSet<>(header.getMetaDataInInputOrder().size());
         for ( VCFHeaderLine line : header.getMetaDataInInputOrder() ) {
             if ( line instanceof VCFFormatHeaderLine ) {
                 line = formatStandards.repair((VCFFormatHeaderLine) line);
             } else if ( line instanceof VCFInfoHeaderLine) {
                 line = infoStandards.repair((VCFInfoHeaderLine) line);
             }
-
             newLines.add(line);
         }
 
-        return new VCFHeader(newLines, header.getGenotypeSamples());
+        // TODO: this does not preserve any header state that is not captured by headerLines/sample-names/version
+        //NOTE that its possible for this to fail in the (probably rare) case that the repaired
+        //lines (which are "versionless") cannot pass validation against the header version
+        VCFHeader newHeader = new VCFHeader(header.getHeaderVersion(), newLines, header.getGenotypeSamples());
+
+        return newHeader;
     }
 
     /**
@@ -187,6 +191,7 @@ public class VCFStandardHeaderLines {
                 final boolean needsRepair  = badCountType || badCount || badType || (REPAIR_BAD_DESCRIPTIONS && badDesc);
 
                 if ( needsRepair ) {
+                    // TODO: Should we warn/log when we do this ?
                     if ( GeneralUtils.DEBUG_MODE_ENABLED ) {
                         System.err.println("Repairing standard header line for field " + line.getID() + " because"
                                            + (badCountType ? " -- count types disagree; header has " + line.getCountType() + " but standard is " + standard.getCountType() : "")

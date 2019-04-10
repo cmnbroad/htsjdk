@@ -114,13 +114,9 @@ public class VCFHeaderLineTranslatorUnitTest extends VariantBaseTest {
     private static void callTranslator(final String line,
                                 final List<String> expectedTagOrder,
                                 final List<String> recommendedTags) {
-        // To cover both constructors for code coverage
-        if (recommendedTags.isEmpty()) {
-            VCFHeaderLineTranslator.parseLine(VCFHeaderVersion.VCF4_2, line, expectedTagOrder);
-        }
-        else {
-            VCFHeaderLineTranslator.parseLine(VCFHeaderVersion.VCF4_2, line, expectedTagOrder, recommendedTags);
-        }
+        //TODO: make sure these tests pass with the new code, and then update the invalidHeaderLines provider to remove
+        // the recommended tags line
+        VCFHeaderLineTranslator.parseLine(VCFHeaderVersion.VCF4_2, line, expectedTagOrder);
     }
 
     @Test(dataProvider = "validHeaderLines")
@@ -158,8 +154,9 @@ public class VCFHeaderLineTranslatorUnitTest extends VariantBaseTest {
         VCFHeaderLineTranslator.parseLine(
                 vcfVersion,
                 "<ID=X,Description=\"Y\">",
-                Arrays.asList("ID"),
-                Arrays.asList("Description")
+                Arrays.asList("ID")
+                //TODO: repair these tests
+                //, Arrays.asList("Description")
         );
     }
 }

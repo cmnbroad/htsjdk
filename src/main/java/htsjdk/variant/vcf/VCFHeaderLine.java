@@ -188,38 +188,4 @@ public class VCFHeaderLine implements Comparable, Serializable {
         return line != null && !line.isEmpty() && VCFHeader.HEADER_INDICATOR.equals(line.substring(0,1));
     }
 
-    /**
-     * create a string of a mapping pair for the target VCF version
-     * @param keyValues a mapping of the key-&gt;value pairs to output
-     * @return a string, correctly formatted
-     */
-    public static String toStringEncoding(Map<String, ? extends Object> keyValues) {
-        StringBuilder builder = new StringBuilder();
-        builder.append('<');
-        boolean start = true;
-        for (Map.Entry<String,?> entry : keyValues.entrySet()) {
-            if (start) start = false;
-            else builder.append(',');
-
-            if ( entry.getValue() == null ) throw new TribbleException.InternalCodecException("Header problem: unbound value at " + entry + " from " + keyValues);
-
-            builder.append(entry.getKey());
-            builder.append('=');
-            builder.append(entry.getValue().toString().contains(",") ||
-                           entry.getValue().toString().contains(" ") ||
-                           entry.getKey().equals("Description") ||
-                           entry.getKey().equals("Source") || // As per VCFv4.2, Source and Version should be surrounded by double quotes
-                           entry.getKey().equals("Version") ? "\""+ escapeQuotes(entry.getValue().toString()) + "\"" : entry.getValue());
-        }
-        builder.append('>');
-        return builder.toString();
-    }
-
-    private static String escapeQuotes(final String value) {
-        // java escaping in a string literal makes this harder to read than it should be
-        // without string literal escaping and quoting the regex would be: replaceAll( ([^\])" , $1\" )
-        // ie replace: something that's not a backslash ([^\]) followed by a double quote
-        // with: the thing that wasn't a backslash ($1), followed by a backslash, followed by a double quote
-        return value.replaceAll("([^\\\\])\"", "$1\\\\\"");
-    }
 }

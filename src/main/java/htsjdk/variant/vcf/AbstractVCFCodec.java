@@ -542,10 +542,6 @@ public abstract class AbstractVCFCodec extends AsciiFeatureCodec<VariantContext>
         final String alts = parts[4];
         builder.log10PError(parseQual(parts[5]));
 
-        final List<String> filters = parseFilters(getCachedString(parts[6]));
-        if ( filters != null ) {
-            builder.filters(new HashSet<>(filters));
-        }
         final Set<String> filters = parseFilters(getCachedString(parts[6]));
         if ( filters != null ) {
             builder.filters(new HashSet<>(filters));

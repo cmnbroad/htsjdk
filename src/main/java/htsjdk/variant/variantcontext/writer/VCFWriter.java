@@ -174,11 +174,8 @@ class VCFWriter extends IndexingVariantContextWriter {
 
     public static VCFHeader writeHeader(VCFHeader header,
                                         final Writer writer,
-                                        final boolean doNotWriteGenotypes,
                                         final String versionLine,
                                         final String streamNameForError) {
-        header = doNotWriteGenotypes ? new VCFHeader(header.getMetaDataInSortedOrder()) : header;
-
         try {
             // Validate that the file version we're writing is version-compatible this header's version.
             validateHeaderVersion(header, versionLine);

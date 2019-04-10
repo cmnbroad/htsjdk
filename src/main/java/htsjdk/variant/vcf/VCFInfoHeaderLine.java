@@ -49,15 +49,7 @@ public class VCFInfoHeaderLine extends VCFCompoundHeaderLine {
     public VCFInfoHeaderLine(String name, int count, VCFHeaderLineType type, String description) {
         super(VCFConstants.INFO_HEADER_KEY, name, count, type, description);
     }
-
-    public VCFInfoHeaderLine(String name, int count, VCFHeaderLineType type, String description, String source, String version) {
-        super(name, count, type, description, SupportedHeaderLineType.INFO, source, version);
-    }
-
-    public VCFInfoHeaderLine(String name, VCFHeaderLineCount count, VCFHeaderLineType type, String description, String source, String version) {
-        super(name, count, type, description, SupportedHeaderLineType.INFO, source, version);
-    }
-
+    
     public VCFInfoHeaderLine(String line, VCFHeaderVersion version) {
         super(VCFConstants.INFO_HEADER_KEY,
               VCFHeaderLineTranslator.parseLine(version, line, expectedTagOrder),

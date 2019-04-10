@@ -67,27 +67,7 @@ public class VCFHeaderLineTranslator {
  * Parse a VCFHeaderLine.
  */
 interface VCFLineParser {
-    public Map<String,String> parseLine(String valueLine, List<String> expectedTagOrder);
-}
-
-/**
- * a class that handles the to and from disk for VCF 4 lines
- */
-class VCF4Parser implements VCFLineParser {
-
-    /**
-     * Parse a VCFHeaderLine. The expectedTagOrder list prescribes the order in which tags should appear, but
-     * all tags are treated as optional. Additional tags are allowed after the expected tags, and may appear in
-     * any order. It is the caller's responsibility to validate that all required tags are present and that
-     * any additional "optional" tags are valid.
-     *
-     * @param valueLine the header line string
-     * @param expectedTagOrder List of tags that are required to appear in the order they're expected. Additional
-     *                         "extra" tags are allowed after the tags in this list, and must be validated by
-     *                         the caller.
-     * @return a mapping of all tags parsed out
-     */
-    Map<String,String> parseLine(String valueLine, List<String> expectedTagOrder, List<String> recommendedTags);
+    Map<String,String> parseLine(String valueLine, List<String> expectedTagOrder);
 }
 
 
@@ -97,7 +77,7 @@ class VCF4Parser implements VCFLineParser {
 class VCF4Parser implements VCFLineParser {
 
     @Override
-    public Map<String, String> parseLine(String valueLine, List<String> expectedTagOrder, List<String> recommendedTags) {
+    public Map<String, String> parseLine(String valueLine, List<String> expectedTagOrder) {
         // our return map
         Map<String, String> ret = new LinkedHashMap<String, String>();
 

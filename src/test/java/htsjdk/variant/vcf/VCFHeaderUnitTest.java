@@ -81,7 +81,7 @@ public class VCFHeaderUnitTest extends VariantBaseTest {
 
     private Set<VCFHeaderLine> getV42HeaderLinesWithNoFormatString() {
         // precondition - create a v42 header and make sure its v42
-        VCFHeader header = createHeader(VCF42headerStrings);
+        VCFHeader header = createHeader(VCF4headerStrings);
         Set<VCFHeaderLine> metaDataSet = new LinkedHashSet<>(header.getMetaDataInInputOrder());
         VCFHeaderLine versionLine = VCFHeader.getVersionLineFromHeaderLineSet(metaDataSet);
         // precondition - make sure its v42 to start with
@@ -110,7 +110,7 @@ public class VCFHeaderUnitTest extends VariantBaseTest {
 
     @Test
     public void testVCF4ToVCF4() throws IOException {
-        VCFHeader header = createHeader(VCF42headerStrings);
+        VCFHeader header = createHeader(VCF4headerStrings);
         Set<VCFHeaderLine> roundTripped = getRoundTripEncoded(header);
         Assert.assertTrue(roundTripped.equals(header.getMetaDataInSortedOrder()));
     }
@@ -257,8 +257,6 @@ public class VCFHeaderUnitTest extends VariantBaseTest {
         final VCFContigHeaderLine contigLine = new VCFContigHeaderLine("<ID=chr1,length=1234567890,assembly=FAKE,md5=f126cdf8a6e0c7f379d618ff66beb2da,species=\"Homo sapiens\">", VCFHeaderVersion.VCF4_0, 0);
         Assert.assertEquals(contigLine.getKey(), VCFHeader.CONTIG_KEY);
         Assert.assertEquals(contigLine.getID(), "chr1");
-        final VCFContigHeaderLine contigLine = new VCFContigHeaderLine(
-                "<ID=chr1,length=1234567890,assembly=FAKE,md5=f126cdf8a6e0c7f379d618ff66beb2da,species=\"Homo sapiens\">", VCFHeaderVersion.VCF4_0, VCFHeader.CONTIG_KEY, 0);
         header.addMetaDataLine(contigLine);
 
         Assert.assertTrue(header.getContigLines().contains(contigLine), "Test contig line not found in contig header lines");
@@ -285,7 +283,6 @@ public class VCFHeaderUnitTest extends VariantBaseTest {
             final VCFContigHeaderLine outrageousContigLine = new VCFContigHeaderLine(
                     "<ID=outrageousID,length=1234567890,assembly=FAKE,md5=f126cdf8a6e0c7f379d618ff66beb2da,species=\"Homo sapiens\">",
                     VCFHeaderVersion.VCF4_2,
-                    VCFHeader.CONTIG_KEY,
                     0);
             orderedList.add(outrageousContigLine);
             // make sure the extra contig line is outrageous enough to not collide with a real contig ID
@@ -321,9 +318,8 @@ public class VCFHeaderUnitTest extends VariantBaseTest {
         VCFHeader header = createHeader(VCF4headerStrings);
         List<VCFFilterHeaderLine> filters = header.getFilterLines();
         VCFFilterHeaderLine filterHeaderLine = filters.get(0);
-        Map<String,String> genericFields = filterHeaderLine.getGenericFields();
-        Assert.assertEquals(genericFields.get("ID"),"NoQCALL");
-        Assert.assertEquals(genericFields.get("Description"),"Variant called by Dindel but not confirmed by QCALL");
+        Assert.assertEquals(filterHeaderLine.getGenericFieldValue("ID"), "NoQCALL");
+        Assert.assertEquals(filterHeaderLine.getGenericFieldValue("Description"),"Variant called by Dindel but not confirmed by QCALL");
     }
 
     @Test

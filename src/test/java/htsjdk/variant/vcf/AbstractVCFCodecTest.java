@@ -70,10 +70,6 @@ public class AbstractVCFCodecTest extends VariantBaseTest {
         };
     }
 
-    @Test(dataProvider = "thingsToTryToDecode")
-    public void testCanDecodeFile(String potentialInput, boolean canDecode) {
-        Assert.assertEquals(AbstractVCFCodec.canDecodeFile(potentialInput, VCFCodec.VCF4_MAGIC_HEADER), canDecode);
-    }
 	@Test(dataProvider = "thingsToTryToDecode")
 	public void testCanDecodeFile(String potentialInput, boolean canDecode) {
 		//TODO: add VCF43Codec when available
